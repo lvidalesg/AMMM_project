@@ -1,0 +1,64 @@
+
+<<< setup
+
+
+<<< generate
+
+Version identifier: 22.1.1.0 | 2022-11-28 | 9160aff4d
+Tried aggregator 1 time.
+MIP Presolve eliminated 14 rows and 0 columns.
+Reduced MIP has 186 rows, 64 columns, and 589 nonzeros.
+Reduced MIP has 64 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0,00 sec. (0,39 ticks)
+Found incumbent of value 140,000000 after 0,00 sec. (1,09 ticks)
+Probing time = 0,00 sec. (0,25 ticks)
+Tried aggregator 1 time.
+Detecting symmetries...
+Reduced MIP has 186 rows, 64 columns, and 589 nonzeros.
+Reduced MIP has 64 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0,00 sec. (0,47 ticks)
+Probing time = 0,00 sec. (0,25 ticks)
+Clique table members: 312.
+MIP emphasis: balance optimality and feasibility.
+MIP search method: dynamic search.
+Parallel mode: deterministic, using up to 4 threads.
+Root relaxation solution time = 0,00 sec. (0,26 ticks)
+
+        Nodes                                         Cuts/
+   Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
+
+*     0+    0                          140,0000        0,0000           100,00%
+*     0+    0                          120,0000        0,0000           100,00%
+*     0+    0                           77,0000        0,0000           100,00%
+      0     0       55,3333    16       77,0000       55,3333       38   28,14%
+      0     0       56,0000    16       77,0000      Cuts: 22       42   27,27%
+      0     0       57,1176    24       77,0000      Cuts: 16       58   25,82%
+      0     0       62,6250    32       77,0000      Cuts: 10       72   18,67%
+      0     0       67,2500    21       77,0000      Cuts: 23       92   12,66%
+      0     0        cutoff             77,0000       77,0000       92    0,00%
+Elapsed time = 0,02 sec. (6,33 ticks, tree = 0,01 MB, solutions = 3)
+
+Implied bound cuts applied:  15
+Zero-half cuts applied:  5
+Lift and project cuts applied:  1
+Gomory fractional cuts applied:  2
+
+Root node processing (before b&c):
+  Real time             =    0,02 sec. (6,34 ticks)
+Parallel b&c, 4 threads:
+  Real time             =    0,00 sec. (0,00 ticks)
+  Sync time (average)   =    0,00 sec.
+  Wait time (average)   =    0,00 sec.
+                          ------------
+Total (root+branch&cut) =    0,02 sec. (6,34 ticks)
+
+<<< solve
+
+
+OBJECTIVE: 77
+
+<<< post process
+
+
+<<< done
+
