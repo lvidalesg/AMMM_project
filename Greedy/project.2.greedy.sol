@@ -13,3 +13,4 @@ Camera #2:
   Weekly cost: 41 euros
 
 TOTAL WEEKLY COST = 87 euros
+Elapsed time: 0.01 seconds

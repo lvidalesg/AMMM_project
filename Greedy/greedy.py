@@ -124,8 +124,10 @@ class CameraSystem:
 
 
 
-
+import time
 def main(archivo_datos):
+    start_time = time.time()
+
     K, P, R, A, C, N, M = load_dat_file(archivo_datos) 
 
     system = CameraSystem(K, P, R, A, C, N, M)
@@ -135,11 +137,16 @@ def main(archivo_datos):
     # print(f"Total candidates: {len(candidates)}")
 
     solution = system.greedy_set_cover(candidates)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Elapsed time: {elapsed_time:.2f} seconds")
+
 
     if solution == 'INFEASIBLE':
         print("\nINFEASIBLE: No valid weekly plan exists.")
         with open('Greedy\\' + archivo_datos.replace('.dat','.greedy.sol'), "w") as f:
             f.write("INFEASIBLE: No valid weekly plan exists.\n")
+            f.write(f"Elapsed time: {elapsed_time:.2f} seconds\n")
     
     else:
         print("\nFeasible greedy solution found:")
@@ -163,6 +170,7 @@ def main(archivo_datos):
 
             # print(f"\nTOTAL WEEKLY COST = {total_cost} euros")
             f.write(f"TOTAL WEEKLY COST = {total_cost} euros\n")
+            f.write(f"Elapsed time: {elapsed_time:.2f} seconds\n")
 
 
 if __name__ == "__main__":

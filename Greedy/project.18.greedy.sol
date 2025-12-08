@@ -41,3 +41,4 @@ Camera #6:
   Weekly cost: 64 euros
 
 TOTAL WEEKLY COST = 461 euros
+Elapsed time: 0.03 seconds
