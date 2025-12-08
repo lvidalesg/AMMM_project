@@ -45,7 +45,7 @@ class InstanceGenerator(object):
             M = [[int(0)]*N for _ in range(N)]
             for i in range(N):
                 for j in range(i+1, N):
-                    d = random.randint(minDist, maxDist)
+                    d = min(random.randint(minDist, maxDist),50)
                     M[i][j] = d
                     M[j][i] = d
 

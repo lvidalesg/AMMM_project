@@ -84,15 +84,14 @@ class CameraSystem:
 
 
     def greedy_set_cover(self, candidates):
-        M = set((j, d) for j in range(self.N) for d in range(7))  # universe to cover
+        M_univ = set((j, d) for j in range(self.N) for d in range(7))  # universe to cover
         R = set()  # already covered
         chosen = []  # selected candidate objects
         used_locations = set()  # cannot place another camera at same crossing
 
-        # Pre-filter candidates: we will maintain dynamic list
         cand_list = candidates.copy()
 
-        while R != M:
+        while R != M_univ:
             best = None
             best_score = inf
 
@@ -144,14 +143,14 @@ def main(archivo_datos):
 
     if solution == 'INFEASIBLE':
         print("\nINFEASIBLE: No valid weekly plan exists.")
-        with open('Greedy\\' + archivo_datos.replace('.dat','.greedy.sol'), "w") as f:
+        with open(current_dir + "\\Greedy\\" + os.path.basename(archivo_datos).replace('.dat','.greedy.sol'), "w") as f:
             f.write("INFEASIBLE: No valid weekly plan exists.\n")
             f.write(f"Elapsed time: {elapsed_time:.2f} seconds\n")
     
     else:
         print("\nFeasible greedy solution found:")
         total_cost = sum(c['cost'] for c in solution)
-        with open('Greedy\\' + archivo_datos.replace('.dat','.greedy.sol'), "w") as f:
+        with open(current_dir + "\\Greedy\\" + os.path.basename(archivo_datos).replace('.dat','.greedy.sol'), "w") as f:
             for idx, c in enumerate(solution, 1):
                 # print(f"\nCamera #{idx}:")
                 # print(f"  Crossing: {c['i'] + 1}")
@@ -172,7 +171,11 @@ def main(archivo_datos):
             f.write(f"TOTAL WEEKLY COST = {total_cost} euros\n")
             f.write(f"Elapsed time: {elapsed_time:.2f} seconds\n")
 
+import os
 
 if __name__ == "__main__":
-    for archivo_datos in glob.glob("project.*.dat"):
+    current_dir = os.getcwd()
+    # print("Directorio actual:", current_dir)
+
+    for archivo_datos in glob.glob(current_dir + "\\InstanceGeneratorProject\\output\\camera_K2_*.dat"):
         main(archivo_datos)
