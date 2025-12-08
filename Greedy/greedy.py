@@ -1,7 +1,7 @@
 from itertools import product
 from load_data_python import load_dat_file
 from math import inf
-
+import glob
 
 DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
 
@@ -124,50 +124,47 @@ class CameraSystem:
 
 
 
-import glob
 
-def main():
-    for archivo_datos in glob.glob("project.*.dat"):
-        K, P, R, A, C, N, M = load_dat_file(archivo_datos) 
+def main(archivo_datos):
+    K, P, R, A, C, N, M = load_dat_file(archivo_datos) 
 
-        system = CameraSystem(K, P, R, A, C, N, M)
+    system = CameraSystem(K, P, R, A, C, N, M)
 
-        # print("\nComputing candidates...")
-        candidates = system.compute_coverages()
-        # print(f"Total candidates: {len(candidates)}")
+    # print("\nComputing candidates...")
+    candidates = system.compute_coverages()
+    # print(f"Total candidates: {len(candidates)}")
 
-        # print("\nRunning greedy set cover...")
-        solution = system.greedy_set_cover(candidates)
+    solution = system.greedy_set_cover(candidates)
 
-        if solution == 'INFEASIBLE':
-            print("\nINFEASIBLE: No valid weekly plan exists.")
-            with open('Greedy\\' + archivo_datos.replace('.dat','.greedy.sol'), "w") as f:
-                f.write("INFEASIBLE: No valid weekly plan exists.\n")
-        
-        else:
-            print("\nFeasible greedy solution found:")
-            total_cost = sum(c['cost'] for c in solution)
-            with open('Greedy\\' + archivo_datos.replace('.dat','.greedy.sol'), "w") as f:
-                for idx, c in enumerate(solution, 1):
-                    # print(f"\nCamera #{idx}:")
-                    # print(f"  Crossing: {c['i'] + 1}")
-                    # print(f"  Model:    {c['k'] + 1}")
-                    # print(f"  Pattern:  {''.join(str(b) for b in c['pattern'])}")
-                    # print(f"  Days ON:  {[DAYS[d] for d,b in enumerate(c['pattern']) if b]}")
-                    # print(f"  Weekly cost: {c['cost']} euros")
+    if solution == 'INFEASIBLE':
+        print("\nINFEASIBLE: No valid weekly plan exists.")
+        with open('Greedy\\' + archivo_datos.replace('.dat','.greedy.sol'), "w") as f:
+            f.write("INFEASIBLE: No valid weekly plan exists.\n")
+    
+    else:
+        print("\nFeasible greedy solution found:")
+        total_cost = sum(c['cost'] for c in solution)
+        with open('Greedy\\' + archivo_datos.replace('.dat','.greedy.sol'), "w") as f:
+            for idx, c in enumerate(solution, 1):
+                # print(f"\nCamera #{idx}:")
+                # print(f"  Crossing: {c['i'] + 1}")
+                # print(f"  Model:    {c['k'] + 1}")
+                # print(f"  Pattern:  {''.join(str(b) for b in c['pattern'])}")
+                # print(f"  Days ON:  {[DAYS[d] for d,b in enumerate(c['pattern']) if b]}")
+                # print(f"  Weekly cost: {c['cost']} euros")
 
-                    # Escribir lo mismo en el archivo .sol
-                    f.write(f"Camera #{idx}:\n")
-                    f.write(f"  Crossing: {c['i'] + 1}\n")
-                    f.write(f"  Model:    {c['k'] + 1}\n")
-                    f.write(f"  Pattern:  {''.join(str(b) for b in c['pattern'])}\n")
-                    f.write(f"  Days ON:  {[DAYS[d] for d,b in enumerate(c['pattern']) if b]}\n")
-                    f.write(f"  Weekly cost: {c['cost']} euros\n\n")
+                # Escribir lo mismo en el archivo .sol
+                f.write(f"Camera #{idx}:\n")
+                f.write(f"  Crossing: {c['i'] + 1}\n")
+                f.write(f"  Model:    {c['k'] + 1}\n")
+                f.write(f"  Pattern:  {''.join(str(b) for b in c['pattern'])}\n")
+                f.write(f"  Days ON:  {[DAYS[d] for d,b in enumerate(c['pattern']) if b]}\n")
+                f.write(f"  Weekly cost: {c['cost']} euros\n\n")
 
-                # print(f"\nTOTAL WEEKLY COST = {total_cost} euros")
-                f.write(f"TOTAL WEEKLY COST = {total_cost} euros\n")
-
+            # print(f"\nTOTAL WEEKLY COST = {total_cost} euros")
+            f.write(f"TOTAL WEEKLY COST = {total_cost} euros\n")
 
 
 if __name__ == "__main__":
-    main()
+    for archivo_datos in glob.glob("project.*.dat"):
+        main(archivo_datos)
