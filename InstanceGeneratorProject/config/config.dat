@@ -1,0 +1,17 @@
+instancesDirectory = InstanceGeneratorProject/output;
+fileNamePrefix = camera;
+fileNameExtension = dat;
+numInstances = 1;
+
+# Camera models
+K = 3;
+minP = 200;
+maxP = 1000;
+
+minC = 10;
+maxC = 70;
+
+# Crossings
+N = 10;
+minDist = 0;
+maxDist = 100;
