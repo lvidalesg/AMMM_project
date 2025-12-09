@@ -22,15 +22,15 @@ from pathlib import Path
 
 import sys
 
-from Heuristics.datParser import DATParser
+from HeuristicsProject.datParser import DATParser
 from AMMMGlobals import AMMMException
-from Heuristics.BRKGA_fwk.solver_BRKGA import Solver_BRKGA
-from Heuristics.validateInputDataP2 import ValidateInputData
-from Heuristics.ValidateConfig import ValidateConfig
-from Heuristics.solvers.solver_Greedy import Solver_Greedy
-from Heuristics.solvers.solver_GRASP import Solver_GRASP
-from Heuristics.solvers.decoder_BRKGA import Decoder
-from Heuristics.problem.instance import Instance
+from HeuristicsProject.BRKGA_fwk.solver_BRKGA import Solver_BRKGA
+from HeuristicsProject.validateInputDataP2 import ValidateInputData
+from HeuristicsProject.ValidateConfig import ValidateConfig
+from HeuristicsProject.solvers.solver_Greedy import Solver_Greedy
+from HeuristicsProject.solvers.solver_GRASP import Solver_GRASP
+from HeuristicsProject.solvers.decoder_BRKGA import Decoder
+from HeuristicsProject.problem.instance import Instance
 
 
 class Main:
@@ -59,7 +59,19 @@ class Main:
                 else:
                     raise AMMMException('Solver %s not supported.' % str(self.config.solver))
                 solution = solver.solve(solution=initialSolution)
-                print('Solution (CPUid: [TasksId]): %s' % str(solution.cpuIdToListTaskId))
+
+                # Pretty print assignments
+                print('Solution:')
+                if hasattr(solution, 'assignments'):
+                    for idx, (modelId, crossingId, pattern) in enumerate(solution.assignments):
+                        days_on = [str(i+1) for i, val in enumerate(pattern) if val == 1]
+                        print(f'  Assignment {idx+1}: Model {modelId+1} -> Crossing {crossingId+1}, Days: {", ".join(days_on)} (pattern: {pattern})')
+                
+                if hasattr(solution, 'coveredCrossingDays'):
+                    covered = len(solution.coveredCrossingDays)
+                    total = len(solution.crossings) * solution.DAYS
+                    print('Covered crossing-day pairs: %d / %d' % (covered, total))
+
                 solution.saveToFile(self.config.solutionFile)
             else:
                 print('Instance is infeasible.')

@@ -27,53 +27,39 @@ from Heuristics.solvers.localSearch import LocalSearch
 class Solver_GRASP(_Solver):
 
     def _selectCandidate(self, candidateList, alpha):
+        # sort candidates by score (cost per new coverage)
+        sortedCandidateList = sorted(candidateList, key=lambda x: x['score'])
 
-        # sort candidate assignments by highestLoad in ascending order
-        sortedCandidateList = sorted(candidateList, key=lambda x: x.highestLoad)
-        
-        # compute boundary highest load as a function of the minimum and maximum highest loads and the alpha parameter
-        minHLoad = sortedCandidateList[0].highestLoad
-        maxHLoad = sortedCandidateList[-1].highestLoad
-        boundaryHLoad = minHLoad + (maxHLoad - minHLoad) * alpha
-        
-        # find elements that fall into the RCL
-        maxIndex = 0
-        for candidate in sortedCandidateList:
-            if candidate.highestLoad <= boundaryHLoad:
-                maxIndex += 1
+        minScore = sortedCandidateList[0]['score']
+        maxScore = sortedCandidateList[-1]['score']
+        boundaryScore = minScore + (maxScore - minScore) * alpha
 
-        # create RCL and pick an element randomly
-        rcl = sortedCandidateList[0:maxIndex]          # pick first maxIndex elements starting from element 0
-        if not rcl: return None
-        return random.choice(rcl)          # pick a candidate from rcl at random
+        rcl = [c for c in sortedCandidateList if c['score'] <= boundaryScore]
+        if not rcl:
+            return None
+        return random.choice(rcl)
     
     def _greedyRandomizedConstruction(self, alpha):
         # get an empty solution for the problem
         solution = self.instance.createSolution()
-        
-        # get tasks and sort them by their total required resources in descending order
-        tasks = self.instance.getTasks()
-        sortedTasks = sorted(tasks, key=lambda t: t.getTotalResources(), reverse=True)
 
+        cameras = self.instance.getCameras()
 
-        # for each task taken in sorted order
-        for task in sortedTasks:
-            taskId = task.getId()
-            
-            # compute feasible assignments
-            candidateList = solution.findFeasibleAssignments(taskId)
+        for camera in cameras:
+            cameraId = camera.getId()
 
-            # no candidate assignments => no feasible assignment found
+            candidateList = solution.computeCandidates(cameraId)
+
             if not candidateList:
-                solution.makeInfeasible()
-                break
-            
-            # select an assignment
-            candidate = self._selectCandidate(candidateList, alpha)
+                continue
 
-            # assign the current task to the CPU that resulted in a minimum highest load
-            solution.assign(taskId, candidate.cpuId)
-            
+            candidate = self._selectCandidate(candidateList, alpha)
+            if candidate is None:
+                continue
+
+            solution.assign(cameraId, candidate['crossingId'])
+            solution.cameraIdToPattern[cameraId] = candidate['pattern']
+        
         return solution
     
     def stopCriteria(self):

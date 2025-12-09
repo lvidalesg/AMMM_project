@@ -17,49 +17,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import random, time
-from Heuristics.solver import _Solver
-from Heuristics.solvers.localSearch import LocalSearch
+import time
+from HeuristicsProject.solver import _Solver
+from HeuristicsProject.solvers.localSearch import LocalSearch
 
 
 # Inherits from the parent abstract solver.
 class Solver_Greedy(_Solver):
 
-    def _selectCandidate(self, candidateList):
-        if self.config.solver == 'Greedy':
-            # sort candidate assignments by highestLoad in ascending order
-            sortedCandidateList = sorted(candidateList, key=lambda x: x.highestLoad)
-            # choose assignment with minimum highest load
-            return sortedCandidateList[0]
-        return random.choice(candidateList)
-
     def construction(self):
         # get an empty solution for the problem
         solution = self.instance.createSolution()
-
-        # get tasks and sort them by their total required resources in descending order
-        tasks = self.instance.getTasks()
-        sortedTasks = sorted(tasks, key=lambda t: t.getTotalResources(), reverse=True)
-
-
-        # for each task taken in sorted order
-        for task in sortedTasks:
-            taskId = task.getId()
-
-            # compute feasible assignments
-            candidateList = solution.findFeasibleAssignments(taskId)
-
-            # no candidate assignments => no feasible assignment found
-            if not candidateList:
-                solution.makeInfeasible()
-                break
-
-            # select assignment
-            candidate = self._selectCandidate(candidateList)
-
-            # assign the current task to the CPU that resulted in a minimum highest load
-            solution.assign(taskId, candidate.cpuId)
-
+        
+        # Execute complete greedy construction
+        solution.greedyConstruction()
+        
         return solution
 
     def solve(self, **kwargs):
