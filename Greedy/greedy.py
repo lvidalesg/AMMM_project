@@ -16,7 +16,7 @@ class CameraSystem:
         self.N = N
         self.M = M
 
-    def is_pattern_valid(self, pattern, A_k):
+    def isPatternValid(self, pattern, A_k):
         """pattern: tuple of 7 bits (0/1). Validate circular runs of 1s: each run length in [2, A_k]."""
         if sum(pattern) == 0:
             return False
@@ -43,47 +43,62 @@ class CameraSystem:
                 return False
         return True
 
-    def all_valid_patterns(self, A_k):
+    def getAllValidPatterns(self, A_k):
         """Return list of patterns (tuples) valid for autonomy A_k."""
         patterns = []
         for bits in product([0,1], repeat=7):
-            if self.is_pattern_valid(bits, A_k):
+            if self.isPatternValid(bits, A_k):
                 patterns.append(bits)
         return patterns
+    
+    def computeCost(self, pattern, P_k, C_k):
+        days_on = sum(pattern)
+        return P_k + days_on * C_k
 
-
-    def compute_coverages(self):
+    def computeCandidates(self):
         """
         Returns list of candidate plans:
-        each candidate is dict with keys:
+        each candidate is a dict with keys:
         - 'i': location (0-based)
         - 'k': model (0-based)
         - 'pattern': tuple of 7 bits
-        - 'days_on': int
         - 'cost': P_k + days_on * C_k
         - 'covered': set of (node, day) pairs (0-based)
         """
         candidates = []
         for i in range(self.N):
             for k in range(self.K):
-                patterns = self.all_valid_patterns(self.A[k])
+                patterns = self.getAllValidPatterns(self.A[k])
                 # If no valid pattern exists for this A[k], continue (shouldn't happen with A>=2)
                 for pat in patterns:
-                    days_on = sum(pat)
-                    cost = self.P[k] + days_on * self.C[k]
+                    cost = self.computeCost(pat, self.P[k], self.C[k])
                     covered = set()
-                    for d, bit in enumerate(pat):
-                        if bit == 1:
-                            # for all nodes j that spatially are covered by camera (i,k)
-                            for j in range(self.N):
-                                if self.M[i][j] <= self.R[k]:
-                                    covered.add((j, d))
+                    for d, is_on in enumerate(pat):
+                        if is_on == 1:
+                            covered |= {(j,d) for j in range(self.N) if self.M[i][j] <= self.R[k]}
                     if covered:
-                        candidates.append({'i': i, 'k': k, 'pattern': pat, 'days_on': days_on, 'cost': cost, 'covered': covered})
+                        candidates.append({'i': i, 'k': k, 'pattern': pat, 'cost': cost, 'covered': covered})
         return candidates
+    
+
+    def getBestCandidate(self, candidates, R, used_locations):
+        best = None
+        best_score = inf
+        for cand in candidates:
+            if cand['i'] in used_locations:
+                continue
+            new_cov = cand['covered'] - R
+            new_count = len(new_cov)
+            if new_count == 0:
+                continue
+            score = cand['cost'] / new_count  # q(p) = cost / newly_covered
+            if score < best_score:
+                best_score = score
+                best = cand
+        return best
 
 
-    def greedy_set_cover(self, candidates):
+    def greedySetCover(self, candidates):
         M_univ = set((j, d) for j in range(self.N) for d in range(7))  # universe to cover
         R = set()  # already covered
         chosen = []  # selected candidate objects
@@ -92,20 +107,7 @@ class CameraSystem:
         cand_list = candidates.copy()
 
         while R != M_univ:
-            best = None
-            best_score = inf
-
-            for cand in cand_list:
-                if cand['i'] in used_locations:
-                    continue
-                new_cov = cand['covered'] - R
-                new_count = len(new_cov)
-                if new_count == 0:
-                    continue
-                score = cand['cost'] / new_count  # q(p) = cost / newly_covered
-                if score < best_score:
-                    best_score = score
-                    best = cand
+            best = self.getBestCandidate(cand_list, R, used_locations)
 
             if best is None:
                 # no candidate can add new coverage -> infeasible
@@ -132,10 +134,9 @@ def main(archivo_datos):
     system = CameraSystem(K, P, R, A, C, N, M)
 
     # print("\nComputing candidates...")
-    candidates = system.compute_coverages()
-    # print(f"Total candidates: {len(candidates)}")
-
-    solution = system.greedy_set_cover(candidates)
+    candidates = system.computeCandidates()
+    solution = system.greedySetCover(candidates)
+    
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"Elapsed time: {elapsed_time:.2f} seconds")
@@ -152,12 +153,6 @@ def main(archivo_datos):
         total_cost = sum(c['cost'] for c in solution)
         with open(current_dir + "\\Greedy\\" + os.path.basename(archivo_datos).replace('.dat','.greedy.sol'), "w") as f:
             for idx, c in enumerate(solution, 1):
-                # print(f"\nCamera #{idx}:")
-                # print(f"  Crossing: {c['i'] + 1}")
-                # print(f"  Model:    {c['k'] + 1}")
-                # print(f"  Pattern:  {''.join(str(b) for b in c['pattern'])}")
-                # print(f"  Days ON:  {[DAYS[d] for d,b in enumerate(c['pattern']) if b]}")
-                # print(f"  Weekly cost: {c['cost']} euros")
 
                 # Escribir lo mismo en el archivo .sol
                 f.write(f"Camera #{idx}:\n")
@@ -167,7 +162,6 @@ def main(archivo_datos):
                 f.write(f"  Days ON:  {[DAYS[d] for d,b in enumerate(c['pattern']) if b]}\n")
                 f.write(f"  Weekly cost: {c['cost']} euros\n\n")
 
-            # print(f"\nTOTAL WEEKLY COST = {total_cost} euros")
             f.write(f"TOTAL WEEKLY COST = {total_cost} euros\n")
             f.write(f"Elapsed time: {elapsed_time:.2f} seconds\n")
 
@@ -177,5 +171,5 @@ if __name__ == "__main__":
     current_dir = os.getcwd()
     # print("Directorio actual:", current_dir)
 
-    for archivo_datos in glob.glob(current_dir + "\\InstanceGeneratorProject\\output\\camera_K2_*.dat"):
+    for archivo_datos in glob.glob(current_dir + "\\InstanceGeneratorProject\\output\\camera_K12*.dat"):
         main(archivo_datos)
