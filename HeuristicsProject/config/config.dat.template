@@ -1,6 +1,6 @@
 # --- Common specific parameters ------------------------------------------------------------------------------
-inputDataFile        = /home/davo/Documents/AMMM_project/InstanceGeneratorProject/output/camera_K10_N26_0.dat;
-solutionFile         = /home/davo/Documents/AMMM_project/HeuristicsProject/solutions/grasp_05/camera_K10_N26_0.sol;
+inputDataFile        = HeuristicsProject/data/example.dat;        # Input DAT file
+solutionFile         = HeuristicsProject/solutions/example.sol;   # Output DAT file (solution)
 solver               = GRASP;                  # Supported solvers: Greedy / Random / GRASP / BRKGA
 maxExecTime          = 200;                      # Maximum execution time in seconds
 verbose              = True;                    # Verbose mode?
