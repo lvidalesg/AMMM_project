@@ -205,7 +205,6 @@ def main(archivo_datos, alpha=0.3):
         with open(out, "w") as f:
             for idx, c in enumerate(solution, 1):
 
-                # Escribir lo mismo en el archivo .sol
                 f.write(f"Camera #{idx}:\n")
                 f.write(f"  Crossing: {c['i'] + 1}\n")
                 f.write(f"  Model:    {c['k'] + 1}\n")

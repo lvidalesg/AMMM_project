@@ -1,28 +1,7 @@
-"""
-AMMM Lab Heuristics
-Representation of a solution instance
-Copyright 2020 Luis Velasco.
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 from itertools import product
 from HeuristicsProject.solution import _Solution
 
 
-# Solution includes functions to manage the solution, to perform feasibility
-# checks and to dump the solution into a string or file.
 class Solution(_Solution):
     DAYS = 7
 
@@ -72,7 +51,6 @@ class Solution(_Solution):
         return patterns
 
     def calculateFitness(self):
-        # Objective (fitness) = total weekly cost
         # For each assignment: P_k + days_on * C_k where days_on = sum(pattern)
         totalCost = 0.0
         for modelId, crossingId, pattern in self.assignments:
