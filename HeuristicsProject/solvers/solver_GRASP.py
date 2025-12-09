@@ -28,13 +28,13 @@ class Solver_GRASP(_Solver):
 
     def _selectCandidate(self, candidateList, alpha):
         # sort candidates by score (cost per new coverage)
-        sortedCandidateList = sorted(candidateList, key=lambda x: x['score'])
+        sortedCandidateList = sorted(candidateList, key=lambda x: x['cost'])
 
-        minScore = sortedCandidateList[0]['score']
-        maxScore = sortedCandidateList[-1]['score']
+        minScore = sortedCandidateList[0]['cost']
+        maxScore = sortedCandidateList[-1]['cost']
         boundaryScore = minScore + (maxScore - minScore) * alpha
 
-        rcl = [c for c in sortedCandidateList if c['score'] <= boundaryScore]
+        rcl = [c for c in sortedCandidateList if c['cost'] <= boundaryScore]
         if not rcl:
             return None
         return random.choice(rcl)
