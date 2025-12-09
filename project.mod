@@ -17,21 +17,11 @@ range D = 1..7;
 dvar boolean x_ik[i in I, k in Ka];
 dvar boolean y_ikd[i in I, k in Ka, d in D];
 dvar int z;
-// Define here your decision variables and
-// any other auxiliary OPL variables you need.
-// You can run an execute block if needed.
 
-//>>>>>>>>>>>>>>>>
-
-//<<<<<<<<<<<<<<<<
-
-// You can run an execute block if needed.
-
+// Set CPLEX parameter for 1% optimality gap
 execute {
-
-//>>>>>>>>>>>>>>>>
-
-//<<<<<<<<<<<<<<<<    
+  cplex.epgap = 0.01;
+  cplex.tilim = 1800;
 }
 
 minimize (sum(i in I) sum(k in Ka) P[k] * x_ik[i,k]) + (sum(i in I) sum(k in Ka) sum(d in D) C[k] * y_ikd[i,k,d]); // Write here the objective function.

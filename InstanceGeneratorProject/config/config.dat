@@ -4,7 +4,7 @@ fileNameExtension = dat;
 numInstances = 1;
 
 # Camera models
-K = 10;
+K = 4;
 minP = 1;
 maxP = 100;
 
@@ -12,6 +12,6 @@ minC = 5;
 maxC = 50;
 
 # Crossings
-N = 26;
+N = 8;
 minDist = 0;
 maxDist = 100;

@@ -1,5 +1,5 @@
 import sys
-from Heuristics.datParser import DATParser
+from HeuristicsProject.datParser import DATParser
 from AMMMGlobals import AMMMException
 from InstanceGeneratorProject.ValidateConfig import ValidateConfig
 from InstanceGeneratorProject.InstanceGenerator import InstanceGenerator
