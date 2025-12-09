@@ -113,8 +113,8 @@ class ValidateConfig(object):
 
             # Validate neighborhoodStrategy
             neighborhoodStrategy = data.neighborhoodStrategy
-            if neighborhoodStrategy not in ['TaskExchange', 'Reassignment']:
-                raise AMMMException('neighborhoodStrategy(%s) has to be one of [Reassignment, Exchange].' % str(neighborhoodStrategy))
+            if neighborhoodStrategy not in ['RemoveCamera']:
+                raise AMMMException('neighborhoodStrategy(%s) has to be RemoveCamera.' % str(neighborhoodStrategy))
 
             # Validate policy
             policy = data.policy
