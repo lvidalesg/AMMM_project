@@ -1,7 +1,9 @@
 from itertools import product
 from load_data_python import load_dat_file
 from math import inf
-import glob
+from pathlib import Path
+import random
+import argparse
 
 DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
 
@@ -79,7 +81,6 @@ class CameraSystem:
                     if covered:
                         candidates.append({'i': i, 'k': k, 'pattern': pat, 'cost': cost, 'covered': covered})
         return candidates
-    
 
     def getBestCandidate(self, candidates, R, used_locations):
         best = None
@@ -97,6 +98,30 @@ class CameraSystem:
                 best = cand
         return best
 
+    def getRCL(self, candidates, R, used_locations, alpha):
+        q_min = inf
+        q_max = -inf
+
+        filtered_candidates = [
+            c for c in candidates
+            if c['i'] not in used_locations and len(c['covered'] - R) > 0
+        ]
+
+        for cand in filtered_candidates:
+            new_cov = cand['covered'] - R
+            new_count = len(new_cov)
+            score = cand['cost'] / new_count  # q(p) = cost / newly_covered
+            q_min = min(q_min, score)
+            q_max = max(q_max, score)
+
+        threshold = q_min + alpha * (q_max - q_min)
+
+        RCL = [
+            cand for cand in filtered_candidates
+            if (cand['cost'] / len(cand['covered'] - R)) <= threshold
+        ]
+
+        return RCL
 
     def greedySetCover(self, candidates):
         M_univ = set((j, d) for j in range(self.N) for d in range(7))  # universe to cover
@@ -122,12 +147,38 @@ class CameraSystem:
             cand_list = [c for c in cand_list if c['i'] != best['i']]
 
         return chosen
+    
+    def graspSetCover(self, candidates, alpha=0.3):
+        M_univ = set((j, d) for j in range(self.N) for d in range(7))  # universe to cover
+        R = set()  # already covered
+        chosen = []  # selected candidate objects
+        used_locations = set()  # cannot place another camera at same crossing
 
+        cand_list = candidates.copy()
+
+        while R != M_univ:
+            RCL = self.getRCL(cand_list, R, used_locations, alpha)
+            best = random.choice(RCL) if RCL else None
+
+            if best is None:
+                # no candidate can add new coverage -> infeasible
+                return 'INFEASIBLE'
+
+            # choose best
+            chosen.append(best)
+            used_locations.add(best['i'])
+            R = R.union(best['covered'])
+
+            # remove all candidates at same location (can't place more than one camera per crossing)
+            cand_list = [c for c in cand_list if c['i'] != best['i']]
+
+        return chosen
 
 
 import time
-def main(archivo_datos):
+def main(archivo_datos, alpha=0.3):
     start_time = time.time()
+    out = Path('./GRASP') / archivo_datos.name.replace('.dat',f'_{alpha}.grasp.sol')
 
     K, P, R, A, C, N, M = load_dat_file(archivo_datos) 
 
@@ -135,8 +186,8 @@ def main(archivo_datos):
 
     # print("\nComputing candidates...")
     candidates = system.computeCandidates()
-    solution = system.greedySetCover(candidates)
-    
+    solution = system.graspSetCover(candidates, alpha=alpha)
+
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"Elapsed time: {elapsed_time:.2f} seconds")
@@ -144,14 +195,14 @@ def main(archivo_datos):
 
     if solution == 'INFEASIBLE':
         print("\nINFEASIBLE: No valid weekly plan exists.")
-        with open(current_dir + "\\Greedy\\" + os.path.basename(archivo_datos).replace('.dat','.greedy.sol'), "w") as f:
+        with open(out, "w") as f:
             f.write("INFEASIBLE: No valid weekly plan exists.\n")
             f.write(f"Elapsed time: {elapsed_time:.2f} seconds\n")
     
     else:
-        print("\nFeasible greedy solution found:")
+        print("\nFeasible GRASP solution found:")
         total_cost = sum(c['cost'] for c in solution)
-        with open(current_dir + "\\Greedy\\" + os.path.basename(archivo_datos).replace('.dat','.greedy.sol'), "w") as f:
+        with open(out, "w") as f:
             for idx, c in enumerate(solution, 1):
 
                 # Escribir lo mismo en el archivo .sol
@@ -165,11 +216,20 @@ def main(archivo_datos):
             f.write(f"TOTAL WEEKLY COST = {total_cost} euros\n")
             f.write(f"Elapsed time: {elapsed_time:.2f} seconds\n")
 
-import os
 
 if __name__ == "__main__":
-    current_dir = os.getcwd()
-    # print("Directorio actual:", current_dir)
+    parser = argparse.ArgumentParser(description='Run GRASP algorithm on camera coverage problem')
+    parser.add_argument('datafile', nargs='?', help='Path to .dat file to solve')
+    parser.add_argument('-a', '--alpha', type=float, default=0.3, 
+                        help='RCL parameter (0=pure greedy, 1=pure random, default=0.3)')
 
-    for archivo_datos in glob.glob(current_dir + "\\InstanceGeneratorProject\\output\\camera_K12*.dat"):
-        main(archivo_datos)
+    args = parser.parse_args()
+
+    if args.datafile:
+        # Single file mode
+        main(Path(args.datafile), alpha=args.alpha)
+    else:
+        # Batch mode - process all camera_K12*.dat files
+        base_dir = Path("../InstanceGeneratorProject/output")
+        for archivo_datos in base_dir.glob("camera_K*.dat"):
+            main(archivo_datos, alpha=args.alpha)
