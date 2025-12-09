@@ -26,41 +26,46 @@ from HeuristicsProject.solvers.localSearch import LocalSearch
 # Inherits from the parent abstract solver.
 class Solver_GRASP(_Solver):
 
-    def _selectCandidate(self, candidateList, alpha):
-        # sort candidates by score (cost per new coverage)
-        sortedCandidateList = sorted(candidateList, key=lambda x: x['score'])
-
-        minScore = sortedCandidateList[0]['score']
-        maxScore = sortedCandidateList[-1]['score']
-        boundaryScore = minScore + (maxScore - minScore) * alpha
-
-        rcl = [c for c in sortedCandidateList if c['score'] <= boundaryScore]
-        if not rcl:
-            return None
-        return random.choice(rcl)
-    
-    def _greedyRandomizedConstruction(self, alpha):
-        # get an empty solution for the problem
-        solution = self.instance.createSolution()
-
-        cameras = self.instance.getCameras()
-
-        for camera in cameras:
-            cameraId = camera.getId()
-
-            candidateList = solution.computeCandidates(cameraId)
-
-            if not candidateList:
-                continue
-
-            candidate = self._selectCandidate(candidateList, alpha)
-            if candidate is None:
-                continue
-
-            solution.assign(cameraId, candidate['crossingId'])
-            solution.cameraIdToPattern[cameraId] = candidate['pattern']
-        
-        return solution
+    def _greedyRandomizedConstruction(self, candidates, alpha, solution, universeSize):
+        """
+        Greedy randomized construction with RCL selection.
+        alpha=0 => pure greedy, alpha=1 => pure random
+        Selects one random candidate from RCL per iteration and accepts it.
+        """
+        while len(solution.coveredCrossingDays) < universeSize:
+            # Get available candidates (not yet assigned crossings)
+            available = [c for c in candidates if c['crossingId'] not in solution.usedCrossings]
+            
+            if not available:
+                break
+            
+            # Compute scores for available candidates
+            scored = []
+            for cand in available:
+                new_cov = cand['covered'] - solution.coveredCrossingDays
+                new_count = len(new_cov)
+                if new_count > 0:
+                    score = cand['cost'] / new_count
+                    scored.append((score, cand))
+            
+            if not scored:
+                break
+            
+            # Sort by score
+            scored.sort(key=lambda x: x[0])
+            q_min = scored[0][0]
+            q_max = scored[-1][0]
+            
+            # Build RCL
+            threshold = q_min + alpha * (q_max - q_min)
+            rcl = [cand for score, cand in scored if score <= threshold]
+            
+            if not rcl:
+                break
+            
+            # Select randomly from RCL and assign immediately
+            best = random.choice(rcl)
+            solution.assign(best['modelId'], best['crossingId'], best['pattern'])
     
     def stopCriteria(self):
         self.elapsedEvalTime = time.time() - self.startTime
@@ -68,10 +73,16 @@ class Solver_GRASP(_Solver):
 
     def solve(self, **kwargs):
         self.startTimeMeasure()
+        
+        # Pre-compute candidates once
+        tempSolution = self.instance.createSolution()
+        allCandidates = tempSolution.computeCandidates()
+        universeSize = len(tempSolution.crossings) * tempSolution.DAYS
+        
         incumbent = self.instance.createSolution()
         incumbent.makeInfeasible()
-        bestHighestLoad = incumbent.getFitness()
-        self.writeLogLine(bestHighestLoad, 0)
+        bestFitness = incumbent.getFitness()
+        self.writeLogLine(bestFitness, 0)
 
         iteration = 0
         while not self.stopCriteria():
@@ -80,20 +91,26 @@ class Solver_GRASP(_Solver):
             # force first iteration as a Greedy execution (alpha == 0)
             alpha = 0 if iteration == 1 else self.config.alpha
 
-            solution = self._greedyRandomizedConstruction(alpha)
+            solution = self.instance.createSolution()
+            candidates = list(allCandidates)  # copy list for this iteration
+            
+            self._greedyRandomizedConstruction(candidates, alpha, solution, universeSize)
+            print(f"Iter {iteration}: alpha={alpha:.2f}, before_LS: fitness={solution.getFitness():.2f}")
+            
             if self.config.localSearch:
                 localSearch = LocalSearch(self.config, None)
                 endTime = self.startTime + self.config.maxExecTime
                 solution = localSearch.solve(solution=solution, startTime=self.startTime, endTime=endTime)
+                print(f"Iter {iteration}: after_LS: fitness={solution.getFitness():.2f}")
 
             if solution.isFeasible():
-                solutionHighestLoad = solution.getFitness()
-                if solutionHighestLoad < bestHighestLoad :
+                solutionFitness = solution.getFitness()
+                if solutionFitness < bestFitness:
                     incumbent = solution
-                    bestHighestLoad = solutionHighestLoad
-                    self.writeLogLine(bestHighestLoad, iteration)
+                    bestFitness = solutionFitness
+                    self.writeLogLine(bestFitness, iteration)
 
-        self.writeLogLine(bestHighestLoad, iteration)
+        self.writeLogLine(bestFitness, iteration)
         self.numSolutionsConstructed = iteration
         self.printPerformance()
         return incumbent

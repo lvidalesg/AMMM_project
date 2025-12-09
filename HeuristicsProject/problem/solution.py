@@ -100,6 +100,21 @@ class Solution(_Solution):
                         if pattern[day] == 1:
                             self.coveredCrossingDays.add((targetCrossingId, day))
 
+    def addCoverageFromAssignment(self, modelId, crossingId, pattern):
+        """
+        Incrementally add coverage from a new assignment without recalculating all.
+        """
+        camera = self.cameras[modelId]
+        cameraRange = camera.getRange()
+
+        for crossing in self.crossings:
+            targetCrossingId = crossing.getId()
+            distance = self.M[crossingId][targetCrossingId]
+            if distance <= cameraRange:
+                for day in range(self.DAYS):
+                    if pattern[day] == 1:
+                        self.coveredCrossingDays.add((targetCrossingId, day))
+
     def assign(self, modelId, crossingId, pattern):
         """Add a new camera assignment (model can be reused, but crossing cannot)"""
         if crossingId in self.usedCrossings:
@@ -107,7 +122,7 @@ class Solution(_Solution):
         
         self.assignments.append((modelId, crossingId, pattern))
         self.usedCrossings.add(crossingId)
-        self.updateCoverage()
+        self.addCoverageFromAssignment(modelId, crossingId, pattern)
         self.calculateFitness()
         return True
     
